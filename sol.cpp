@@ -8,35 +8,22 @@ int main() {
 
     int n;
     cin >> n;
+    cerr << n << "\n";
 
     bool sorted = false;
     vector<int> v(n);
     for (int i = 0; i < n; i++) {
         cin >> v[i];
     }
-    int counter = 0;
-    while (sorted == false) {
-        sorted = true;
-        int minimum = INT_MAX;
-        int min_pos = -1;
-        for (int i = 0; i < n - counter; i++) {
-            if (v[i+counter]<v[min(0, i+counter-1)]) {
-                sorted = false;
-            }
-            if (v[i+counter] < minimum) {
-                minimum = v[i+counter];
-                min_pos = i+counter;
-            }
+    for (int i = 0; i < n; i++) {
+        int min_pos = i;
+        for (int j = i + 1; j < n; j++) {
+            if (v[j] < v[min_pos]) min_pos = j;
         }
-        if (min_pos == -1) {
-            return 1;
-        }
-        v[min_pos] = v[counter];
-        v[counter] = minimum;
-        counter++;
+        swap(v[i], v[min_pos]);
     }
 
-    for (int x : v) cout << x << " ";
+    for (const int x : v) cout << x << " ";
 
     return 0;
 }
