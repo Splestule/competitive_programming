@@ -3,20 +3,19 @@ using namespace std;
 using ll = long long;
 
 
-
-void BFS(vector<int> from, vector<int> pos, vector<vector<int>>& dp, const vector<vector<int>>& grid, int N, queue<vector<int>>& q, queue<vector<int>>& froms, vector<vector<vector<int>>>& directions, vector<vector<int>>& time) {
-    if (grid[pos[0]][pos[1]] - dp[from[0]][from[1]]+1 >= 0 && (min(grid[pos[0]][pos[1]],dp[from[0]][from[1]]) > dp[pos[0]][pos[1]] || (min(grid[pos[0]][pos[1]],dp[from[0]][from[1]]) == dp[pos[0]][pos[1]])) && time[from[0]][from[1]] > time[pos[0]][pos[1]]) {
-        dp[pos[0]][pos[1]] = dp[from[0]][from[1]];
-        time[pos[0]][pos[1]] = time[from[0]][from[1]]+1;
-        directions[pos[0]][pos[1]][0] = pos[0]-from[0]; directions[pos[0]][pos[1]][1] = pos[1]-from[1];
-        int k{};
-        for (int i = -1; i < 2; i += 2) {
-            if (pos[0]+i<N && 0<=pos[0]+i) {q.push({pos[0]+i, pos[1]}); k++;}
-            if (pos[1]+i<N && 0<=pos[1]+i) {q.push({pos[0], pos[1]+i}); k++;}
+void BFS(bool& ok, int now, pair<int, int> pos, const vector<vector<int>>& grid, const pair<int,int>& target, queue<pair<int,int>>& q, vector<vector<bool>>& visited, const int& time, const int& N, queue<int>& times) {
+    if (grid[pos.first][pos.second] >= time + now && visited[pos.first][pos.second] == false) {
+        visited[pos.first][pos.second] = true;
+        if (pos == target) ok = true;
+        else {
+            if (pos.first + 1 < N) {q.push({pos.first + 1, pos.second}); times.push(now+1);}
+            if (pos.second + 1 < N) {q.push({pos.first, pos.second + 1}); times.push(now+1);}
+            if (pos.first - 1 >= 0) {q.push({pos.first - 1, pos.second}); times.push(now+1);}
+            if (pos.second - 1 >= 0) {q.push({pos.first, pos.second - 1}); times.push(now+1);}
         }
-        for (int i = 0; i < k; i++) {froms.push({pos[0], pos[1]});}
     }
 }
+
 
 int main() {
     ios_base::sync_with_stdio(false);
@@ -29,43 +28,49 @@ int main() {
         int N, x, y;
         cin >> N >> x >> y;
         x--;y--;
-        queue<vector<int>> q;
-        queue<vector<int>> froms;
-        vector<vector<int>> dp(N, vector<int>(N, 0));
-        vector<vector<int>> time(N, vector<int>(N, INT_MAX));
-        time[N/2][N/2] = 0;
+        int max_height = 0;
         vector<vector<int>> grid(N, vector<int>(N, 0));
-        vector<vector<vector<int>>> directions(N, vector<vector<int>>(N, {0, 0}));
-
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 cin >> grid[i][j];
+                if (grid[i][j] > max_height) max_height = grid[i][j];
             }
         }
-        vector<int> start = {N/2,N/2};
-        q.push({N/2+1,N/2}); froms.push(start);
-        q.push({N/2-1,N/2}); froms.push(start);
-        q.push({N/2,N/2+1}); froms.push(start);
-        q.push({N/2,N/2-1}); froms.push(start);
-        dp[N/2][N/2] = grid[N/2][N/2];
-        while (!q.empty()) {
-            cerr << "length: " << q.size() << '\n';
-            const auto to = q.front();
-            const auto from = froms.front();
-            BFS(from, to, dp, grid, N, q, froms, directions, time);
-            q.pop();
-            froms.pop();
-        }
-        if (dp[x][y] == INT_MAX) {cout << -1 << '\n'; continue;}
-        int w = x;
-        int z = y;
-        int ans = INT_MAX;
-        while (w != N/2 && z != N/2) {
-            cerr << "w: " << w << " z: " << z << '\n';
-            ans = min(ans, grid[w][z]-dp[w][z]);
-            int temp = directions[w][z][0]; z -= directions[w][z][1];
-            w -= temp;
-        }
+
+        int r = max_height;
+        int l = 0;
+        int time;
+        int ans;
+
+        bool possible = false;
+
+            do {
+                time = l + ((r-l+1)/2);
+                vector<vector<bool>> visited(N, vector<bool>(N, false));
+                queue<pair<int, int>> q;
+                queue<int> times;
+                q.push({N/2, N/2});
+                times.push(0);
+                bool ok = false;
+                while (!q.empty() && !ok) {
+                    auto pos = q.front();
+                    auto now = times.front();
+                    BFS(ok, now, pos, grid, {y,x}, q, visited, time, N, times);
+                    q.pop();
+                    times.pop();
+                }
+                if (!ok) {
+                    r = l + ((r-l+1)/2)-1;
+                }
+                else {
+                    l = l + ((r-l+1)/2);
+                    possible = true;
+                    ans = time;
+                    if (l==r) break;
+                }
+            } while (r >= l);
+
+        if (!possible) {cout << -1 << '\n'; continue;}
         cout << ans << '\n';
     }
 }
